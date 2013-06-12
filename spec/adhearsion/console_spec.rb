@@ -61,7 +61,7 @@ module Adhearsion
 
     describe "#shutdown!" do
       it "should tell the process to shutdown" do
-        Adhearsion::Process.should_receive(:shutdown!).once
+        Adhearsion.process.should_receive(:shutdown!).once
         Console.shutdown!
       end
     end

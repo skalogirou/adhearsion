@@ -59,7 +59,7 @@ module Adhearsion
         mock_client.as_null_object
         mock_client.stub :event_handler= => true
         Events.refresh!
-        Adhearsion::Process.stub :fqdn => 'hostname'
+        Adhearsion.process.stub :fqdn => 'hostname'
         ::Process.stub :pid => 1234
       end
 
@@ -144,7 +144,7 @@ module Adhearsion
 
       describe '#connect_to_server' do
         before :each do
-          Adhearsion::Process.reset
+          Adhearsion.process.reset
           Initializer.config = reset_default_config
           Initializer.config.reconnect_attempts = 1
           Adhearsion::Logging.get_logger(Initializer).should_receive(:fatal).at_most(:once)
@@ -152,14 +152,14 @@ module Adhearsion
         end
 
         after :each do
-          Adhearsion::Process.reset
+          Adhearsion.process.reset
         end
 
         it 'should reset the Adhearsion process state to "booting"' do
-          Adhearsion::Process.booted
-          Adhearsion::Process.state_name.should be == :running
+          Adhearsion.process.booted
+          Adhearsion.process.state_name.should be == :running
           mock_client.stub(:run).and_raise Punchblock::DisconnectedError
-          Adhearsion::Process.should_receive(:reset).at_least(:once)
+          Adhearsion.process.should_receive(:reset).at_least(:once)
           Initializer.connect_to_server
         end
 
@@ -176,8 +176,8 @@ module Adhearsion
         end
 
         it 'should not attempt to reconnect if Adhearsion is shutting down' do
-          Adhearsion::Process.booted
-          Adhearsion::Process.shutdown
+          Adhearsion.process.booted
+          Adhearsion.process.shutdown
           mock_client.stub(:run).and_raise Punchblock::DisconnectedError
           Initializer.should_not raise_error Punchblock::DisconnectedError
         end
@@ -210,11 +210,11 @@ module Adhearsion
       describe "dispatching an offer" do
         before do
           initialize_punchblock
-          Adhearsion::Process.should_receive(:state_name).once.and_return process_state
+          Adhearsion.process.should_receive(:state_name).once.and_return process_state
           Adhearsion.active_calls.should_receive(:from_offer).once.and_return mock_call
         end
 
-        context "when the Adhearsion::Process is :booting" do
+        context "when the Adhearsion.process is :booting" do
           let(:process_state) { :booting }
 
           it 'should reject a call with cause :declined' do
@@ -223,7 +223,7 @@ module Adhearsion
         end
 
         [ :running, :stopping ].each do |state|
-          context "when when Adhearsion::Process is in :#{state}" do
+          context "when when Adhearsion.process is in :#{state}" do
             let(:process_state) { state }
 
             it "should dispatch via the router" do
@@ -235,7 +235,7 @@ module Adhearsion
           end
         end
 
-        context "when when Adhearsion::Process is in :rejecting" do
+        context "when when Adhearsion.process is in :rejecting" do
           let(:process_state) { :rejecting }
 
           it 'should reject a call with cause :declined' do
@@ -243,7 +243,7 @@ module Adhearsion
           end
         end
 
-        context "when when Adhearsion::Process is not :running, :stopping or :rejecting" do
+        context "when when Adhearsion.process is not :running, :stopping or :rejecting" do
           let(:process_state) { :foobar }
 
           it 'should reject a call with cause :error' do

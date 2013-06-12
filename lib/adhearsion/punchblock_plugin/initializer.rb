@@ -80,12 +80,12 @@ module Adhearsion
         end
 
         def connect
-          return unless Process.state_name == :booting
+          return unless Adhearsion.process.state_name == :booting
           m = Mutex.new
           blocker = ConditionVariable.new
 
           Events.punchblock Punchblock::Connection::Connected do
-            Adhearsion::Process.booted
+            Adhearsion.process.booted
             m.synchronize { blocker.broadcast }
           end
 
@@ -94,7 +94,7 @@ module Adhearsion
             m.synchronize { blocker.broadcast }
           end
 
-          Adhearsion::Process.important_threads << Thread.new do
+          Adhearsion.process.important_threads << Thread.new do
             catching_standard_errors { connect_to_server }
           end
 
@@ -109,15 +109,15 @@ module Adhearsion
           client.run
         rescue Punchblock::DisconnectedError => e
           # We only care about disconnects if the process is up or booting
-          return unless [:booting, :running].include? Adhearsion::Process.state_name
+          return unless [:booting, :running].include? Adhearsion.process.state_name
 
-          Adhearsion::Process.reset unless Adhearsion::Process.state_name == :booting
+          Adhearsion.process.reset unless Adhearsion.process.state_name == :booting
 
           self.attempts += 1
 
           if self.attempts >= self.config.reconnect_attempts
             logger.fatal "Connection lost. Connection retry attempts exceeded."
-            Adhearsion::Process.stop!
+            Adhearsion.process.stop!
             return
           end
 
@@ -132,7 +132,7 @@ module Adhearsion
         def dispatch_offer(offer)
           catching_standard_errors do
             call = Adhearsion.active_calls.from_offer offer
-            case Adhearsion::Process.state_name
+            case Adhearsion.process.state_name
             when :booting, :rejecting
               logger.info "Declining call because the process is not yet running."
               call.reject :decline
@@ -161,7 +161,7 @@ module Adhearsion
         end
 
         def resource
-          [Adhearsion::Process.fqdn, ::Process.pid].join '-'
+          [Adhearsion.process.fqdn, ::Process.pid].join '-'
         end
 
         def connection
