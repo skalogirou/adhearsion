@@ -11,5 +11,4 @@
   exception_handler
   libc
   object
-  thread_safety
 }.each { |f| require "adhearsion/foundation/#{f}" }
