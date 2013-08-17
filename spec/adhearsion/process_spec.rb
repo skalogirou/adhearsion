@@ -93,10 +93,5 @@ module Adhearsion
       subject.shutdown
       sleep 0.2
     end
-
-    it 'should forcibly kill the Adhearsion process on :force_stop' do
-      ::Process.should_receive(:exit).once.with(1)
-      subject.force_stop
-    end
   end
 end
