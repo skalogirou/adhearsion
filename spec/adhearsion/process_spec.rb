@@ -89,7 +89,7 @@ module Adhearsion
       subject.state_name.should be :rejecting
       subject.shutdown
       subject.state_name.should be :stopped
-      Adhearsion.process.should_receive(:die_now!).once
+      ::Process.should_receive(:exit).once.with(1)
       subject.shutdown
       sleep 0.2
     end
