@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 module Adhearsion
-  describe Adhearsion.process do
+  describe Adhearsion::Process do
     before :all do
       Adhearsion.active_calls.clear
     end
@@ -29,7 +29,7 @@ module Adhearsion
         calls << fake_call
       end
       Adhearsion.should_receive(:active_calls).and_return calls
-      Adhearsion.process.instance.should_receive(:final_shutdown).once
+      subject.should_receive(:final_shutdown).once
       blocking_threads = []
       3.times do
         blocking_threads << Thread.new do
@@ -37,13 +37,13 @@ module Adhearsion
           calls.pop
         end
       end
-      Adhearsion.process.stop_when_zero_calls
+      subject.stop_when_zero_calls
       blocking_threads.each { |thread| thread.join }
     end
 
     it 'should terminate the process immediately on #force_stop' do
       ::Process.should_receive(:exit).with(1).once.and_return true
-      Adhearsion.process.force_stop
+      subject.force_stop
     end
 
     describe "#final_shutdown" do
@@ -55,7 +55,7 @@ module Adhearsion
           Adhearsion.active_calls << fake_call
         end
 
-        Adhearsion.process.final_shutdown
+        subject.final_shutdown
 
         Adhearsion.active_calls.clear
       end
@@ -71,32 +71,32 @@ module Adhearsion
         Events.shutdown { sleep 1; foo[:b] }
         Events.shutdown { foo[:c] }
 
-        Adhearsion.process.final_shutdown
+        subject.final_shutdown
       end
 
       it "should stop the console" do
         Console.should_receive(:stop).once
-        Adhearsion.process.final_shutdown
+        subject.final_shutdown
       end
     end
 
     it 'should handle subsequent :shutdown events in the correct order' do
-      Adhearsion.process.booted
-      Adhearsion.process.state_name.should be :running
-      Adhearsion.process.shutdown
-      Adhearsion.process.state_name.should be :stopping
-      Adhearsion.process.shutdown
-      Adhearsion.process.state_name.should be :rejecting
-      Adhearsion.process.shutdown
-      Adhearsion.process.state_name.should be :stopped
+      subject.booted
+      subject.state_name.should be :running
+      subject.shutdown
+      subject.state_name.should be :stopping
+      subject.shutdown
+      subject.state_name.should be :rejecting
+      subject.shutdown
+      subject.state_name.should be :stopped
       Adhearsion.process.should_receive(:die_now!).once
-      Adhearsion.process.shutdown
+      subject.shutdown
       sleep 0.2
     end
 
     it 'should forcibly kill the Adhearsion process on :force_stop' do
       ::Process.should_receive(:exit).once.with(1)
-      Adhearsion.process.force_stop
+      subject.force_stop
     end
   end
 end
