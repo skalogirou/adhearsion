@@ -146,7 +146,7 @@ module Adhearsion
                 pre_join_tasks new_call
                 @call.answer
                 join_status.started
-                new_call.join @call
+                new_call.join @call, @options[:join_options]
                 status.answer!
               elsif status.result == :answer
                 join_status.lost_confirmation!
